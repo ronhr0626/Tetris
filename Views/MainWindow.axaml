@@ -1,0 +1,183 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Tetris.ViewModels"
+        xmlns:m="using:Tetris.Models"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="Tetris.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Tetris"
+        Width="600" Height="700"
+        WindowStartupLocation="CenterScreen"
+        Background="#111">
+
+    <Design.DataContext>
+        <vm:MainViewModel/>
+    </Design.DataContext>
+
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#444"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="20,8"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#666"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#888"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="TextBlock.label">
+            <Setter Property="Foreground" Value="#888"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style Selector="TextBlock.value">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <Style Selector="TextBlock.help">
+            <Setter Property="Foreground" Value="#888"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style Selector="TextBlock.key">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid ColumnDefinitions="*,Auto" Margin="16">
+
+        <!-- Board + overlays share the same cell -->
+        <Grid>
+            <Viewbox Stretch="Uniform">
+                <ItemsControl ItemsSource="{Binding Cells}" Width="300" Height="600">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="10" Rows="20"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="m:Cell">
+                            <Border Background="{Binding Fill}" BorderBrush="#222" BorderThickness="1"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Viewbox>
+
+            <!-- Pause overlay -->
+            <Border IsVisible="{Binding IsPaused}" Background="#AA000000">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                    <TextBlock Text="PAUSED" FontSize="36" FontWeight="Bold"
+                               Foreground="White" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Press P to continue" FontSize="16"
+                               Foreground="#AAA" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Game over overlay -->
+            <Border IsVisible="{Binding IsGameOver}" Background="#CC000000">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                    <TextBlock Text="GAME OVER" FontSize="36" FontWeight="Bold"
+                               Foreground="White" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Press R to restart" FontSize="16"
+                               Foreground="#AAA" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- High score overlay (last = drawn on top of everything) -->
+            <Border IsVisible="{Binding IsHighScoresOpen}" Background="#EE000000">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="12">
+                    <TextBlock Text="HIGH SCORES" FontSize="32" FontWeight="Bold"
+                               Foreground="White" HorizontalAlignment="Center"/>
+                    <ItemsControl ItemsSource="{Binding AllHighScores}" HorizontalAlignment="Center">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <TextBlock Text="{Binding}" FontFamily="Consolas, monospace"
+                                           FontSize="16" Foreground="White"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="Press H to close" FontSize="14"
+                               Foreground="#AAA" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Side panel -->
+        <StackPanel Grid.Column="1" Margin="24,0,0,0" Spacing="4" Width="170">
+            <TextBlock Classes="label" Text="NEXT"/>
+            <ItemsControl ItemsSource="{Binding NextCells}" Width="80" Height="80"
+                          HorizontalAlignment="Left">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="4" Rows="4"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="m:Cell">
+                        <Border Background="{Binding Fill}" BorderBrush="#222" BorderThickness="1"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Classes="label" Text="SCORE" Margin="0,12,0,0"/>
+            <TextBlock Classes="value" Text="{Binding Score}"/>
+
+            <TextBlock Classes="label" Text="LINES" Margin="0,8,0,0"/>
+            <TextBlock Classes="value" Text="{Binding Lines}"/>
+
+            <TextBlock Classes="label" Text="LEVEL" Margin="0,8,0,0"/>
+            <TextBlock Classes="value" Text="{Binding Level}"/>
+
+            <Button Content="Pause" Command="{Binding TogglePauseCommand}" Margin="0,16,0,0"/>
+            <Button Content="Restart" Command="{Binding RestartCommand}" Margin="0,6,0,0"/>
+            <Button Content="High Scores" Command="{Binding ToggleHighScoresCommand}" Margin="0,6,0,0"/>
+
+            <!-- Top 3 -->
+            <TextBlock Classes="label" Text="TOP 3" Margin="0,16,0,4"/>
+            <ItemsControl ItemsSource="{Binding HighScores}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <TextBlock Classes="key" Text="{Binding}" FontSize="14"
+                                   FontFamily="Consolas, monospace"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Controls help -->
+            <TextBlock Classes="label" Text="CONTROLS" Margin="0,16,0,4"/>
+            <Grid ColumnDefinitions="70,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                <TextBlock Grid.Row="0" Classes="key" Text="← → / A D"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" Classes="help" Text="Move"/>
+
+                <TextBlock Grid.Row="1" Classes="key" Text="↑ / W"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" Classes="help" Text="Rotate"/>
+
+                <TextBlock Grid.Row="2" Classes="key" Text="↓ / S"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" Classes="help" Text="Soft drop (faster)"/>
+
+                <TextBlock Grid.Row="3" Classes="key" Text="Space"/>
+                <TextBlock Grid.Row="3" Grid.Column="1" Classes="help" Text="Hard drop (instant)"/>
+
+                <TextBlock Grid.Row="4" Classes="key" Text="P / Esc"/>
+                <TextBlock Grid.Row="4" Grid.Column="1" Classes="help" Text="Pause"/>
+
+                <TextBlock Grid.Row="5" Classes="key" Text="H"/>
+                <TextBlock Grid.Row="5" Grid.Column="1" Classes="help" Text="High scores"/>
+
+                <TextBlock Grid.Row="6" Classes="key" Text="R"/>
+                <TextBlock Grid.Row="6" Grid.Column="1" Classes="help" Text="Restart"/>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</Window>
